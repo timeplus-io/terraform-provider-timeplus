@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     timeplus = {
-      source = "timeplus.io/terraform/timeplus"
+      source = "dev.timeplus.com/terraform/timeplus"
     }
   }
 }

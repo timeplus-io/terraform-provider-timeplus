@@ -38,7 +38,7 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-		Address: "dev.timeplus.io/terraform/timeplus",
+		Address: "dev.timeplus.com/terraform/timeplus",
 		Debug:   debug,
 	}
 

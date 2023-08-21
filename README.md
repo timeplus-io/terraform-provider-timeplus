@@ -48,7 +48,7 @@ This plug is not published to the terraform registry yet. To use it, please eith
 provider_installation {
 
   dev_overrides {
-      "dev.timeplus.io/terraform/timeplus" = "/Users/gimi/go/bin"
+      "dev.timeplus.com/terraform/timeplus" = "/Users/gimi/go/bin"
   }
 
   # For all other providers, install them directly from their origin provider
@@ -64,7 +64,7 @@ Once your `.terrraformrc` is properly configured, you can add the `timeplus` pro
 terraform {
   required_providers {
     timeplus = {
-      source = "dev.timeplus.io/terraform/timeplus"
+      source = "dev.timeplus.com/terraform/timeplus"
     }
   }
 }
