@@ -58,7 +58,7 @@ provider_installation {
 }
 ```
 
-Once your `.terrraformrc` is properly configured, you can add the `timeplus` provider to your terraform config file and start managing Timeplus resources with it. Below is an example of using the provider to create a simeple stream. More examples can be found in the [examples](./tree/main/examples) folder.
+Once your `.terrraformrc` is properly configured, you can add the `timeplus` provider to your terraform config file and start managing Timeplus resources with it. Below is an example of using the provider to create a simeple stream. More examples can be found in the [examples](./examples) folder.
 
 ```terraform
 terraform {
