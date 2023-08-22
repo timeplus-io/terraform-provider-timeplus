@@ -10,7 +10,3 @@ resource "timeplus_sink" "example" {
     payload_field = "{{ . | toJSON }}"
   })
 }
-
-output "example" {
-  value = resource.timeplus_sink.example
-}

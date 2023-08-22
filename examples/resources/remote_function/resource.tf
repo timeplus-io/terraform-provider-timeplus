@@ -20,7 +20,3 @@ resource "timeplus_remote_function" "example" {
     type = "int64"
   }
 }
-
-output "example_remote_function" {
-  value = resource.timeplus_remote_function.example
-}
