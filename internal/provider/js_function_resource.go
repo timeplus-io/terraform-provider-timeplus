@@ -9,13 +9,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/timeplus-io/terraform-provider-timeplus/internal/timeplus"
-	myValidator "github.com/timeplus-io/terraform-provider-timeplus/internal/validator"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -62,14 +59,10 @@ func (r *javascriptFunctionResource) Schema(_ context.Context, _ resource.Schema
 			"is_aggregate_function": schema.BoolAttribute{
 				MarkdownDescription: "Indecates if the javascript function an aggregate function",
 				Optional:            true,
-				Default:             booldefault.StaticBool(false),
 			},
 			"source": schema.StringAttribute{
 				MarkdownDescription: "The javascript function source code",
 				Required:            true,
-				Validators: []validator.String{
-					myValidator.URL(),
-				},
 			},
 			"return_type": schema.StringAttribute{
 				MarkdownDescription: "The type of the function's return value",
@@ -189,7 +182,13 @@ func (r *javascriptFunctionResource) Read(ctx context.Context, req resource.Read
 	data.ReturnType = types.StringValue(s.ReturnType)
 
 	// optional fields
-	data.IsAggrFunction = types.BoolValue(s.IsAggrFunction)
+	if !(data.IsAggrFunction.IsNull() && !s.IsAggrFunction) {
+		data.IsAggrFunction = types.BoolValue(s.IsAggrFunction)
+	}
+
+	if !(data.Description.IsNull() && s.Description == "") {
+		data.Description = types.StringValue(s.Description)
+	}
 
 	data.Arguments = make([]functionArgumentModel, 0, len(s.Arguments))
 	for i := range s.Arguments {
@@ -197,10 +196,6 @@ func (r *javascriptFunctionResource) Read(ctx context.Context, req resource.Read
 			Name: types.StringValue(s.Arguments[i].Name),
 			Type: types.StringValue(s.Arguments[i].Type),
 		})
-	}
-
-	if !(data.Description.IsNull() && s.Description == "") {
-		data.Description = types.StringValue(s.Description)
 	}
 
 	// Save updated data into Terraform state
