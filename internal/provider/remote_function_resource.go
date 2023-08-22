@@ -218,6 +218,7 @@ func (r *remoteFunctionResource) Read(ctx context.Context, req resource.ReadRequ
 	// required fields
 	data.Name = types.StringValue(s.Name)
 	data.URL = types.StringValue(s.URL)
+	data.ReturnType = types.StringValue(s.ReturnType)
 
 	// optional fields
 	data.Arguments = make([]functionArgumentModel, 0, len(s.Arguments))
@@ -289,7 +290,7 @@ func (r *remoteFunctionResource) Update(ctx context.Context, req resource.Update
 		Source:         "",
 	}
 	if err := r.client.UpdateUDF(&f); err != nil {
-		resp.Diagnostics.AddError("Error Updating RemoteFunction", fmt.Sprintf("Unable to update remote function %q, got error: %s", s.Name, err))
+		resp.Diagnostics.AddError("Error Updating RemoteFunction", fmt.Sprintf("Unable to update remote function %q, got error: %s", f.Name, err))
 		return
 	}
 
