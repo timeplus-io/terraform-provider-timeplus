@@ -9,10 +9,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/timeplus-io/terraform-provider-timeplus/internal/timeplus"
+	myValidator "github.com/timeplus-io/terraform-provider-timeplus/internal/validator"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -69,6 +71,9 @@ func (r *remoteFunctionResource) Schema(_ context.Context, _ resource.SchemaRequ
 			"url": schema.StringAttribute{
 				MarkdownDescription: "The HTTP endpoint to be used to call the function",
 				Required:            true,
+				Validators: []validator.String{
+					myValidator.URL(),
+				},
 			},
 			"auth_header": schema.SingleNestedAttribute{
 				MarkdownDescription: "The HTTP header and its value to be used as an authentication means to call the function. The remote function can use this information to determine if it's a valid call",
@@ -83,6 +88,10 @@ func (r *remoteFunctionResource) Schema(_ context.Context, _ resource.SchemaRequ
 						Required:            true,
 					},
 				},
+			},
+			"return_type": schema.StringAttribute{
+				MarkdownDescription: "The type of the function's return value",
+				Required:            true,
 			},
 		},
 		Blocks: map[string]schema.Block{
