@@ -23,7 +23,7 @@ resource "timeplus_javascript_function" "example" {
 
 resource "timeplus_javascript_function" "aggregate_example" {
   name                  = "second_max"
-  description           = "Returns the second largest number"
+  description           = "Returns the unique second largest number"
   is_aggregate_function = true
   return_type           = "float64"
 
@@ -47,7 +47,7 @@ resource "timeplus_javascript_function" "aggregate_example" {
 
     _update: function(value) {
         if (value == this.max) {
-            console.log("this is a log from second_max UDA")
+            // skip
         } else if (value > this.max) {
             this.sec_max = this.max;
             this.max = value;
