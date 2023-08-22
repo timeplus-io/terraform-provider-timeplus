@@ -46,6 +46,10 @@ func (d *javascriptFunctionDataSource) Schema(ctx context.Context, req datasourc
 				MarkdownDescription: "A detailed text describes the javascript function",
 				Computed:            true,
 			},
+			"is_aggregate_function": schema.BoolAttribute{
+				MarkdownDescription: "Indecates if the javascript function an aggregate function",
+				Computed:            true,
+			},
 			"source": schema.StringAttribute{
 				MarkdownDescription: "The javascript function source code",
 				Computed:            true,
@@ -54,7 +58,7 @@ func (d *javascriptFunctionDataSource) Schema(ctx context.Context, req datasourc
 				MarkdownDescription: "The type of the function's return value",
 				Computed:            true,
 			},
-			"arguments": schema.ListNestedAttribute{
+			"arg": schema.ListNestedAttribute{
 				MarkdownDescription: "The argument names and types the javascript function takes",
 				Computed:            true,
 				NestedObject: schema.NestedAttributeObject{
@@ -125,6 +129,7 @@ func (d *javascriptFunctionDataSource) Read(ctx context.Context, req datasource.
 	data.Name = types.StringValue(s.Name)
 	data.IsAggrFunction = types.BoolValue(s.IsAggrFunction)
 	data.Source = types.StringValue(s.Source)
+	data.ReturnType = types.StringValue(s.ReturnType)
 
 	// optional fields
 	data.Arguments = make([]functionArgumentModel, 0, len(s.Arguments))
