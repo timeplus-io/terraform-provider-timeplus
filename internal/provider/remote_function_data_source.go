@@ -68,7 +68,7 @@ func (d *remoteFunctionDataSource) Schema(ctx context.Context, req datasource.Sc
 				MarkdownDescription: "The type of the function's return value",
 				Computed:            true,
 			},
-			"arguments": schema.ListNestedAttribute{
+			"arg": schema.ListNestedAttribute{
 				MarkdownDescription: "The argument names and types the remote function takes",
 				Computed:            true,
 				NestedObject: schema.NestedAttributeObject{
@@ -138,6 +138,7 @@ func (d *remoteFunctionDataSource) Read(ctx context.Context, req datasource.Read
 	// required fields
 	data.Name = types.StringValue(s.Name)
 	data.URL = types.StringValue(s.URL)
+	data.ReturnType = types.StringValue(s.ReturnType)
 
 	// optional fields
 	data.Arguments = make([]functionArgumentModel, 0, len(s.Arguments))

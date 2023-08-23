@@ -154,7 +154,7 @@ func (r *remoteFunctionResource) Create(ctx context.Context, req resource.Create
 
 	var (
 		authCtx    *timeplus.UDFAuthContext
-		authMethod = timeplus.UDFAuthNone
+		authMethod timeplus.UDFAuthMethod
 	)
 	if data.AuthHeader != nil {
 		authMethod = timeplus.UDFAuthHeader
@@ -233,7 +233,7 @@ func (r *remoteFunctionResource) Read(ctx context.Context, req resource.ReadRequ
 		data.Description = types.StringValue(s.Description)
 	}
 
-	if !(data.AuthHeader == nil && s.AuthMethod == timeplus.UDFAuthNone) {
+	if !(data.AuthHeader == nil && (s.AuthMethod == timeplus.UDFAuthNone || s.AuthMethod == "")) {
 		ctx := s.AuthContext
 		if ctx == nil {
 			ctx = &timeplus.UDFAuthContext{}
@@ -268,7 +268,7 @@ func (r *remoteFunctionResource) Update(ctx context.Context, req resource.Update
 
 	var (
 		authCtx    *timeplus.UDFAuthContext
-		authMethod = timeplus.UDFAuthNone
+		authMethod timeplus.UDFAuthMethod
 	)
 	if data.AuthHeader != nil {
 		authMethod = timeplus.UDFAuthHeader
