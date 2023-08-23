@@ -21,7 +21,3 @@ resource "timeplus_source" "example" {
     data_type = "json"
   })
 }
-
-output "example" {
-  value = resource.timeplus_source.example
-}

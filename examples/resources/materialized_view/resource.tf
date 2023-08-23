@@ -6,7 +6,3 @@ resource "timeplus_materialized_view" "example" {
   retention_period    = 7 * 24 * 60 * 60 * 1000 // 7 days in ms 
   historical_data_ttl = "to_datetime(_tp_time) + INTERVAL 30 DAYS"
 }
-
-output "example" {
-  value = resource.timeplus_materialized_view.example
-}
