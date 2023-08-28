@@ -88,9 +88,11 @@ func (p *TimeplusProvider) Resources(ctx context.Context) []func() resource.Reso
 		NewViewResource,
 		NewMaterializedViewResource,
 		NewSinkResource,
+		NewAlertResource,
 		NewSourceResource,
 		NewRemoteFunctionResource,
 		NewJavascriptFunctionResource,
+		NewDashboardResource,
 	}
 }
 
@@ -100,9 +102,11 @@ func (p *TimeplusProvider) DataSources(ctx context.Context) []func() datasource.
 		NewViewDataSource,
 		NewMaterializedViewDataSource,
 		NewSinkDataSource,
+		NewAlertDataSource,
 		NewSourceDataSource,
 		NewRemoteFunctionDataSource,
 		NewJavascriptFunctionDataSource,
+		NewDashboardDataSource,
 	}
 }
 

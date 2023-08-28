@@ -12,7 +12,7 @@ The Timeplus provider for Terraform is a plugin that enables full lifecycle mana
 ## Requirements
 
 - [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.0
-- [Go](https://golang.org/doc/install) >= 1.19
+- [Go](https://golang.org/doc/install) >= 1.20.0
 
 ## Building The Provider
 
@@ -101,3 +101,8 @@ If you wish to work on the provider, you'll first need [Go](http://www.golang.or
 To compile the provider, run `go install`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
 
 To generate or update documentation, run `go generate`.
+
+## Useful documentations for provider development
+
+* Timeplus document web site: https://docs.timeplus.com/
+* Terraform plugin framework doc: https://developer.hashicorp.com/terraform/plugin/framework
