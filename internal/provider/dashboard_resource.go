@@ -6,16 +6,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/timeplus-io/terraform-provider-timeplus/internal/timeplus"
+	myvalidator "github.com/timeplus-io/terraform-provider-timeplus/internal/validator"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -67,6 +70,9 @@ func (r *dashboardResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 			"panels": schema.StringAttribute{
 				MarkdownDescription: "A list of panels defined in a JSON array. The best way to generate such array is to copy it directly from the Timeplus console UI.",
 				Required:            true,
+				Validators: []validator.String{
+					myvalidator.JsonArrayOfObject(),
+				},
 			},
 		},
 	}
@@ -155,12 +161,21 @@ func (r *dashboardResource) Read(ctx context.Context, req resource.ReadRequest, 
 	// required fields
 	data.Name = types.StringValue(s.Name)
 
-	bytes, err := json.Marshal(s.Panels)
-	if err != nil {
-		resp.Diagnostics.AddAttributeError(path.Root("panels"), "Panel Parsing Failed", err.Error())
+	var panels []timeplus.Panel
+	if err := json.Unmarshal([]byte(data.Panels.ValueString()), &panels); err != nil {
+		resp.Diagnostics.AddError("Panel Decoding Failed", fmt.Sprintf("Failed to decode the panels JSON stored in state: %s", err))
+		return
 	}
 
-	data.Panels = types.StringValue(string(bytes))
+	// only update data.Panels when it does not match what the API returns
+	if !reflect.DeepEqual(panels, s.Panels) {
+		bytes, err := json.Marshal(s.Panels)
+		if err != nil {
+			resp.Diagnostics.AddError("Panel Encoding Failed", fmt.Sprintf("Failed to encode panels from the fetched dashboard: %s", err.Error()))
+			return
+		}
+		data.Panels = types.StringValue(string(bytes))
+	}
 
 	// optional fields
 	if !(data.Description.IsNull() && s.Description == "") {
