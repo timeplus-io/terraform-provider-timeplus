@@ -99,8 +99,8 @@ func (d *dashboardDataSource) Read(ctx context.Context, req datasource.ReadReque
 		return
 	}
 
-	// required fields
 	data.Name = types.StringValue(s.Name)
+	data.Description = types.StringValue(s.Description)
 
 	bytes, err := json.Marshal(s.Panels)
 	if err != nil {
@@ -108,11 +108,6 @@ func (d *dashboardDataSource) Read(ctx context.Context, req datasource.ReadReque
 	}
 
 	data.Panels = types.StringValue(string(bytes))
-
-	// optional fields
-	if !(data.Description.IsNull() && s.Description == "") {
-		data.Description = types.StringValue(s.Description)
-	}
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
