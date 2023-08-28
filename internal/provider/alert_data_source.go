@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -64,6 +63,7 @@ func (d *alertDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 			"properties": schema.StringAttribute{
 				MarkdownDescription: "JSON string of an object defines the configurations for the specific sink type",
 				Computed:            true,
+				Sensitive:           true,
 			},
 			"trigger_sql": schema.StringAttribute{
 				MarkdownDescription: "The query the alert uses to generate events that trigger the alert",
@@ -114,34 +114,19 @@ func (d *alertDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	// required fields
 	data.Name = types.StringValue(s.Name)
+	data.Description = types.StringValue(s.Description)
 	data.Severity = types.Int64Value(int64(s.Severity))
 	data.Action = types.StringValue(s.Action)
 	data.TriggerSQL = types.StringValue(s.TriggerSQL)
+	data.ResolveSQL = types.StringValue(s.ResolveSQL)
 
-	props := make(map[string]any)
-	if data.Properties.ValueString() != "" {
-		_ = json.Unmarshal([]byte(data.Properties.ValueString()), &props)
+	propsBytes, err := json.Marshal(s.Properties)
+	if err != nil {
+		resp.Diagnostics.AddError("Bad Alert Properties", fmt.Sprintf("Unable to encode alert properties into JSON, got error: %s", err))
+		return
 	}
-
-	if !reflect.DeepEqual(props, s.Properties) {
-		propsBytes, err := json.Marshal(s.Properties)
-		if err != nil {
-			resp.Diagnostics.AddError("Bad Alert Properties", fmt.Sprintf("Unable to encode alert properties into JSON, got error: %s", err))
-			return
-		}
-		data.Properties = types.StringValue(string(propsBytes))
-	}
-
-	// optional fields
-	if s.Description != "" {
-		data.Description = types.StringValue(s.Description)
-	}
-
-	if s.ResolveSQL != "" {
-		data.Description = types.StringValue(s.Description)
-	}
+	data.Properties = types.StringValue(string(propsBytes))
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
