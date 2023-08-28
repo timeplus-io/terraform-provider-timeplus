@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -84,8 +85,9 @@ func (r *alertResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 			},
 			// since Terraform does not have built-in support for map[string]any with the framework library, we use JSON as a simple solution
 			"properties": schema.StringAttribute{
-				MarkdownDescription: "JSON string of an object defines the configurations for the specific sink type",
+				MarkdownDescription: "JSON string of an object defines the configurations for the specific sink type. The properites could contain sensitive information like password, secret, etc.",
 				Required:            true,
+				Sensitive:           true,
 				Validators: []validator.String{
 					myvalidator.JsonObject(),
 				},
@@ -187,12 +189,18 @@ func (r *alertResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	data.Action = types.StringValue(s.Action)
 	data.TriggerSQL = types.StringValue(s.TriggerSQL)
 
+	// We can't compare the JSON directly since order is not guaranteed, need a bit more work to detect if properties are acutally changed
 	props := make(map[string]any)
 	if data.Properties.ValueString() != "" {
 		_ = json.Unmarshal([]byte(data.Properties.ValueString()), &props)
 	}
 
-	if !reflect.DeepEqual(props, s.Properties) {
+	clone := maps.Clone(props)
+
+	// API does not return sensitive fields, thus we can't simply use s.Properties to replace data.Properties
+	maps.Copy(props, s.Properties)
+
+	if !reflect.DeepEqual(clone, props) {
 		propsBytes, err := json.Marshal(s.Properties)
 		if err != nil {
 			resp.Diagnostics.AddError("Bad Alert Properties", fmt.Sprintf("Unable to encode alert properties into JSON, got error: %s", err))
@@ -207,7 +215,7 @@ func (r *alertResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	}
 
 	if !(data.ResolveSQL.IsNull() && s.ResolveSQL == "") {
-		data.Description = types.StringValue(s.Description)
+		data.ResolveSQL = types.StringValue(s.ResolveSQL)
 	}
 
 	// Save updated data into Terraform state
@@ -231,6 +239,7 @@ func (r *alertResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	}
 
 	s := timeplus.Alert{
+		ID:          data.ID.ValueString(),
 		Name:        data.Name.ValueString(),
 		Description: data.Description.ValueString(),
 		Severity:    int(data.Severity.ValueInt64()),
