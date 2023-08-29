@@ -5,6 +5,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -27,12 +28,12 @@ type streamDataSource struct {
 
 // streamDataSourceModel describes the data source data model.
 type streamDataSourceModel struct {
-	Name              types.String  `tfsdk:"name"`
-	Description       types.String  `tfsdk:"description"`
-	Columns           []columnModel `tfsdk:"columns"`
-	RetentionSize     types.Int64   `tfsdk:"retention_size"`
-	RetentionPeriod   types.Int64   `tfsdk:"retention_period"`
-	HistoricalDataTTL types.String  `tfsdk:"historical_data_ttl"`
+	Name           types.String  `tfsdk:"name"`
+	Description    types.String  `tfsdk:"description"`
+	Columns        []columnModel `tfsdk:"columns"`
+	RetentionBytes types.Int64   `tfsdk:"retention_bytes"`
+	RetentionMS    types.Int64   `tfsdk:"retention_ms"`
+	HistoryTTL     types.String  `tfsdk:"history_ttl"`
 }
 
 func (d *streamDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -70,20 +71,24 @@ func (d *streamDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 							MarkdownDescription: "The default value for the column",
 							Computed:            true,
 						},
+						"codec": schema.StringAttribute{
+							MarkdownDescription: "The codec for value encoding",
+							Computed:            true,
+						},
 					},
 				},
 			},
-			"retention_size": schema.Int64Attribute{
+			"retention_bytes": schema.Int64Attribute{
 				MarkdownDescription: "The retention size threadhold in bytes indicates how many data could be kept in the streaming store",
 				Optional:            true,
 				Computed:            true,
 			},
-			"retention_period": schema.Int64Attribute{
+			"retention_ms": schema.Int64Attribute{
 				MarkdownDescription: "The retention period threadhold in millisecond indicates how long data could be kept in the streaming store",
 				Optional:            true,
 				Computed:            true,
 			},
-			"historical_data_ttl": schema.StringAttribute{
+			"history_ttl": schema.StringAttribute{
 				MarkdownDescription: "A SQL expression defines the maximum age of data that are persisted in the historical store",
 				Optional:            true,
 				Computed:            true,
@@ -130,16 +135,18 @@ func (d *streamDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 	data.Name = types.StringValue(s.Name)
 	data.Description = types.StringValue(s.Description)
-	data.RetentionSize = types.Int64Value(int64(s.RetentionBytes))
-	data.RetentionPeriod = types.Int64Value(int64(s.RetentionMS))
-	data.HistoricalDataTTL = types.StringValue(s.HistoricalTTLExpression)
+	data.RetentionBytes = types.Int64Value(int64(s.RetentionBytes))
+	data.RetentionMS = types.Int64Value(int64(s.RetentionMS))
+	data.HistoryTTL = types.StringValue(s.HistoricalTTLExpression)
 
 	data.Columns = make([]columnModel, 0, len(s.Columns))
 	for i := range s.Columns {
+		codec := types.StringValue(strings.TrimSuffix(strings.TrimPrefix(s.Columns[i].Codec, "CODEC("), ")"))
 		data.Columns = append(data.Columns, columnModel{
 			Name:    types.StringValue(s.Columns[i].Name),
 			Type:    types.StringValue(s.Columns[i].Type),
 			Default: types.StringValue(s.Columns[i].Default),
+			Codec:   codec,
 		})
 	}
 

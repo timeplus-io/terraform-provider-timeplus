@@ -6,7 +6,6 @@ type Column struct {
 	Name                    string `json:"name" binding:"required" example:"name"`
 	Type                    string `json:"type" binding:"required" example:"string"`
 	Default                 string `json:"default,omitempty"`
-	CompressionCodec        string `json:"compression_codec,omitempty"`
 	Codec                   string `json:"codec"`
 	TTLExpression           string `json:"ttl_expression,omitempty"`
 	SkippingIndexExpression string `json:"skipping_index_expression,omitempty"`
