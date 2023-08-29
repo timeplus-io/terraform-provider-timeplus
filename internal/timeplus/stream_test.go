@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/timeplus-io/timeplus-provider/internal/timeplus"
+	"github.com/timeplus-io/terraform-provider-timeplus/internal/timeplus"
 )
 
 func newClient(t *testing.T) *timeplus.Client {
