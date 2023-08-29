@@ -61,7 +61,7 @@ func (d *alertDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 			},
 			// since Terraform does not have built-in support for map[string]any with the framework library, we use JSON as a simple solution
 			"properties": schema.StringAttribute{
-				MarkdownDescription: "JSON string of an object defines the configurations for the specific sink type",
+				MarkdownDescription: "a JSON object defines the configurations for the specific alert action. The properites could contain sensitive information like password, secret, etc.",
 				Computed:            true,
 				Sensitive:           true,
 			},

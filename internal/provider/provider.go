@@ -41,18 +41,21 @@ func (p *TimeplusProvider) Metadata(ctx context.Context, _ provider.MetadataRequ
 
 func (p *TimeplusProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		MarkdownDescription: `The Timeplus provider is used to interact with the resources supported by [Timeplus](https://www.timeplus.com/) in a workspace. The provider needs to be configured with an API key before it can be used.
+
+Use the navigation to the left to read about the available resources.`,
 		Attributes: map[string]schema.Attribute{
 			"endpoint": schema.StringAttribute{
-				MarkdownDescription: "The base URL endpoint for connecting to the Timeplus workspace.",
+				MarkdownDescription: "The base URL endpoint for connecting to the Timeplus workspace. When it's not set, `https://us.timeplus.cloud` will be used.",
 				Optional:            true,
 				Validators:          []validator.String{myValidator.URL()},
 			},
 			"workspace": schema.StringAttribute{
-				MarkdownDescription: "The workspace ID to connect to.",
+				MarkdownDescription: "The ID of the workspace in which the provider manages resources.",
 				Required:            true,
 			},
 			"api_key": schema.StringAttribute{
-				MarkdownDescription: "The API key to be used to call API.",
+				MarkdownDescription: "The API key to be used to call Timeplus API.",
 				Required:            true,
 				Sensitive:           true,
 			},

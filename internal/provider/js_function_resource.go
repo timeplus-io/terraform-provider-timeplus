@@ -45,7 +45,7 @@ func (r *javascriptFunctionResource) Metadata(_ context.Context, req resource.Me
 func (r *javascriptFunctionResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		MarkdownDescription: "Timeplus javascript functions are one of the supported user defined function types. They allow users to register a HTTP webhook as a function which can be called in any queries.",
+		MarkdownDescription: "Timeplus javascript functions are one of the supported user defined function types. Javascript functions allow users to implement functions with the javascript programming language, and be called in queries.",
 
 		Attributes: map[string]schema.Attribute{
 			"name": schema.StringAttribute{

@@ -83,7 +83,7 @@ func (r *streamResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 		},
 		Blocks: map[string]schema.Block{
 			"column": schema.ListNestedBlock{
-				MarkdownDescription: "Define a column of the stream",
+				MarkdownDescription: "Define the columns of the stream",
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
@@ -141,6 +141,11 @@ func (r *streamResource) Create(ctx context.Context, req resource.CreateRequest,
 
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	if len(data.Columns) == 0 {
+		resp.Diagnostics.AddAttributeError(path.Root("column"), "No Columns", "At least one column must be defined for a stream.")
+    return
 	}
 
 	columns := make([]timeplus.Column, 0, len(data.Columns))

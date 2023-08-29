@@ -35,7 +35,7 @@ func (d *javascriptFunctionDataSource) Metadata(ctx context.Context, req datasou
 func (d *javascriptFunctionDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		MarkdownDescription: "Timeplus javascript functions are one of the supported user defined function types. They allow users to define a function using the javascript programming language and use it in queries.",
+		MarkdownDescription: "Timeplus javascript functions are one of the supported user defined function types. Javascript functions allow users to implement functions with the javascript programming language, and be called in queries.",
 
 		Attributes: map[string]schema.Attribute{
 			"name": schema.StringAttribute{

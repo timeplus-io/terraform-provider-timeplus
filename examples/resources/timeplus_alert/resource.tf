@@ -1,3 +1,16 @@
+resource "timeplus_stream" "machine" {
+  name        = "cpu_temperature"
+  description = "A stream for alert example."
+  column {
+    name = "machine"
+    type = "string"
+  }
+  column {
+    name = "temp"
+    type = "uint8"
+  }
+}
+
 resource "timeplus_alert" "example" {
   name        = "cpu_too_hot"
   description = "Alarm for when the CPU gets too hot"

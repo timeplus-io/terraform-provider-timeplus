@@ -35,7 +35,7 @@ func (d *remoteFunctionDataSource) Metadata(ctx context.Context, req datasource.
 func (d *remoteFunctionDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		MarkdownDescription: "Timeplus remote functions are one of the supported user defined function types. They allow users to register a HTTP webhook as a function which can be called in any queries.",
+		MarkdownDescription: "Timeplus remote functions are one of the supported user defined function types. Remote functions allow users to register a HTTP webhook as a function which can be called in queries.",
 
 		Attributes: map[string]schema.Attribute{
 			"name": schema.StringAttribute{
