@@ -54,7 +54,9 @@ func (r *alertResource) Metadata(_ context.Context, req resource.MetadataRequest
 func (r *alertResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		MarkdownDescription: "Alerts are like sinks, they send data to external systems. The differences are, alerts have two statuses: triggerred and resolved, thus an alert runs two SQL to detect if the status should triggerred or resolved. Once an alert is in one status, it won't send the same kind of events to the target until it gets a different kind of event.",
+		MarkdownDescription: `Alerts are like sinks, they are used to send data to external systems. How alerts are different is that alerts have two statuses: 'triggerred' and 'resolved'.
+
+An alert runs two queries in background to detect if the status should be triggerred or resolved. Once an alert is in one status, it won't send the same kind of events to the target until it gets a different kind of event.`,
 
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -85,7 +87,7 @@ func (r *alertResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 			},
 			// since Terraform does not have built-in support for map[string]any with the framework library, we use JSON as a simple solution
 			"properties": schema.StringAttribute{
-				MarkdownDescription: "JSON string of an object defines the configurations for the specific alert action. The properites could contain sensitive information like password, secret, etc.",
+				MarkdownDescription: "a JSON object defines the configurations for the specific alert action. The properites could contain sensitive information like password, secret, etc.",
 				Required:            true,
 				Sensitive:           true,
 				Validators: []validator.String{
