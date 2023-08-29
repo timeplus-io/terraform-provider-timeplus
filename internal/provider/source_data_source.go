@@ -61,7 +61,8 @@ func (d *sourceDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 			},
 			// since Terraform does not have built-in support for map[string]any with the framework library, we use JSON as a simple solution
 			"properties": schema.StringAttribute{
-				MarkdownDescription: "JSON string of an object defines the configurations for the specific source type",
+				MarkdownDescription: "JSON string of an object defines the configurations for the specific source type. The properites could contain sensitive information like password, secret, etc.",
+				Sensitive:           true,
 				Computed:            true,
 			},
 		},
@@ -107,7 +108,6 @@ func (d *sourceDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
-	// required fields
 	data.Name = types.StringValue(s.Name)
 	data.Description = types.StringValue(s.Description)
 	data.Stream = types.StringValue(s.Stream)

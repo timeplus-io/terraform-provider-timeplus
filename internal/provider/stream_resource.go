@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -31,21 +32,20 @@ type streamResource struct {
 }
 
 type columnModel struct {
-	Name            types.String `tfsdk:"name"`
-	Type            types.String `tfsdk:"type"`
-	Default         types.String `tfsdk:"default"`
-	Codec           types.String `tfsdk:"codec"`
-	CodecExpression types.String `tfsdk:"codec_expression"`
+	Name    types.String `tfsdk:"name"`
+	Type    types.String `tfsdk:"type"`
+	Default types.String `tfsdk:"default"`
+	Codec   types.String `tfsdk:"codec"`
 }
 
 // streamResourceModel describes the stream resource data model.
 type streamResourceModel struct {
-	Name              types.String  `tfsdk:"name"`
-	Description       types.String  `tfsdk:"description"`
-	Columns           []columnModel `tfsdk:"column"`
-	RetentionSize     types.Int64   `tfsdk:"retention_size"`
-	RetentionPeriod   types.Int64   `tfsdk:"retention_period"`
-	HistoricalDataTTL types.String  `tfsdk:"historical_data_ttl"`
+	Name           types.String  `tfsdk:"name"`
+	Description    types.String  `tfsdk:"description"`
+	Columns        []columnModel `tfsdk:"column"`
+	RetentionBytes types.Int64   `tfsdk:"retention_bytes"`
+	RetentionMS    types.Int64   `tfsdk:"retention_ms"`
+	HistoryTTL     types.String  `tfsdk:"history_ttl"`
 }
 
 func (r *streamResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -66,17 +66,17 @@ func (r *streamResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				MarkdownDescription: "A detailed text describes the stream",
 				Optional:            true,
 			},
-			"retention_size": schema.Int64Attribute{
+			"retention_bytes": schema.Int64Attribute{
 				MarkdownDescription: "The retention size threadhold in bytes indicates how many data could be kept in the streaming store",
 				Optional:            true,
 				Computed:            true,
 			},
-			"retention_period": schema.Int64Attribute{
+			"retention_ms": schema.Int64Attribute{
 				MarkdownDescription: "The retention period threadhold in millisecond indicates how long data could be kept in the streaming store",
 				Optional:            true,
 				Computed:            true,
 			},
-			"historical_data_ttl": schema.StringAttribute{
+			"history_ttl": schema.StringAttribute{
 				MarkdownDescription: "A SQL expression defines the maximum age of data that are persisted in the historical store",
 				Optional:            true,
 			},
@@ -105,10 +105,6 @@ func (r *streamResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 							Optional:            true,
 							Computed:            true,
 							Default:             stringdefault.StaticString(""),
-						},
-						"codec_expression": schema.StringAttribute{
-							MarkdownDescription: "The computed codec",
-							Computed:            true,
 						},
 					},
 				},
@@ -150,10 +146,10 @@ func (r *streamResource) Create(ctx context.Context, req resource.CreateRequest,
 	columns := make([]timeplus.Column, 0, len(data.Columns))
 	for i := range data.Columns {
 		columns = append(columns, timeplus.Column{
-			Name:             data.Columns[i].Name.ValueString(),
-			Type:             data.Columns[i].Type.ValueString(),
-			Default:          data.Columns[i].Default.ValueString(),
-			CompressionCodec: data.Columns[i].Codec.ValueString(),
+			Name:    data.Columns[i].Name.ValueString(),
+			Type:    data.Columns[i].Type.ValueString(),
+			Default: data.Columns[i].Default.ValueString(),
+			Codec:   data.Columns[i].Codec.ValueString(),
 		})
 	}
 
@@ -161,9 +157,9 @@ func (r *streamResource) Create(ctx context.Context, req resource.CreateRequest,
 		Name:                    data.Name.ValueString(),
 		Description:             data.Description.ValueString(),
 		Columns:                 columns,
-		RetentionBytes:          int(data.RetentionSize.ValueInt64()),
-		RetentionMS:             int(data.RetentionPeriod.ValueInt64()),
-		HistoricalTTLExpression: data.HistoricalDataTTL.ValueString(),
+		RetentionBytes:          int(data.RetentionBytes.ValueInt64()),
+		RetentionMS:             int(data.RetentionMS.ValueInt64()),
+		HistoricalTTLExpression: data.HistoryTTL.ValueString(),
 	}
 	if err := r.client.CreateStream(&s); err != nil {
 		resp.Diagnostics.AddError("Error Creating Stream", fmt.Sprintf("Unable to create stream %q, got error: %s", s.Name, err))
@@ -171,18 +167,8 @@ func (r *streamResource) Create(ctx context.Context, req resource.CreateRequest,
 	}
 
 	// Computed fields
-	data.RetentionSize = types.Int64Value(int64(s.RetentionBytes))
-	data.RetentionPeriod = types.Int64Value(int64(s.RetentionMS))
-
-	for i := range data.Columns {
-		name := data.Columns[i].Name.ValueString()
-		for j := range s.Columns {
-			if s.Columns[j].Name == name {
-				data.Columns[i].CodecExpression = types.StringValue(s.Columns[j].Codec)
-				break
-			}
-		}
-	}
+	data.RetentionBytes = types.Int64Value(int64(s.RetentionBytes))
+	data.RetentionMS = types.Int64Value(int64(s.RetentionMS))
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
@@ -213,6 +199,7 @@ func (r *streamResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
+	// in case `_tp_time` column is explicitely specified
 	hasTpTimeColumn := false
 	for i := range data.Columns {
 		if data.Columns[i].Name.ValueString() == "_tp_time" {
@@ -224,7 +211,6 @@ func (r *streamResource) Read(ctx context.Context, req resource.ReadRequest, res
 	// required fields
 	data.Name = types.StringValue(s.Name)
 
-	columnStates := data.Columns
 	data.Columns = make([]columnModel, 0, len(s.Columns))
 	for i := range s.Columns {
 		name := s.Columns[i].Name
@@ -233,18 +219,14 @@ func (r *streamResource) Read(ctx context.Context, req resource.ReadRequest, res
 			continue
 		}
 
-		codec := types.StringValue("")
-		for j := range columnStates {
-			if columnStates[j].Name.ValueString() == name {
-				codec = columnStates[j].Codec
-			}
-		}
+		// `codec` returned by the API contains the `CODEC()` function call, like `CODEC(LZ4)`.
+		// Removing the surrounding `CODEC()` to match the input.
+		codec := types.StringValue(strings.TrimSuffix(strings.TrimPrefix(s.Columns[i].Codec, "CODEC("), ")"))
 		data.Columns = append(data.Columns, columnModel{
-			Name:            types.StringValue(name),
-			Type:            types.StringValue(s.Columns[i].Type),
-			Default:         types.StringValue(s.Columns[i].Default),
-			Codec:           codec,
-			CodecExpression: types.StringValue(s.Columns[i].Codec),
+			Name:    types.StringValue(name),
+			Type:    types.StringValue(s.Columns[i].Type),
+			Default: types.StringValue(s.Columns[i].Default),
+			Codec:   codec,
 		})
 	}
 
@@ -254,19 +236,19 @@ func (r *streamResource) Read(ctx context.Context, req resource.ReadRequest, res
 	}
 
 	// the create stream API will set retention_bytes to 0 if it's not provided
-	if !(data.RetentionSize.IsNull() && s.RetentionBytes == 0) {
-		data.RetentionSize = types.Int64Value(int64(s.RetentionBytes))
+	if !(data.RetentionBytes.IsNull() && s.RetentionBytes == 0) {
+		data.RetentionBytes = types.Int64Value(int64(s.RetentionBytes))
 	}
 
 	// the create stream API will set retention_ms to 0 if it's not provided
-	if !(data.RetentionPeriod.IsNull() && s.RetentionMS == 0) {
-		data.RetentionPeriod = types.Int64Value(int64(s.RetentionMS))
+	if !(data.RetentionMS.IsNull() && s.RetentionMS == 0) {
+		data.RetentionMS = types.Int64Value(int64(s.RetentionMS))
 	}
 
-	if !(data.HistoricalDataTTL.IsNull() && s.HistoricalTTLExpression == "") {
+	if !(data.HistoryTTL.IsNull() && s.HistoricalTTLExpression == "") {
 		// assume TTL expressions are space insignificant
-		if spaces.ReplaceAllString(data.HistoricalDataTTL.ValueString(), "") != spaces.ReplaceAllString(s.HistoricalTTLExpression, "") {
-			data.HistoricalDataTTL = types.StringValue(s.HistoricalTTLExpression)
+		if spaces.ReplaceAllString(data.HistoryTTL.ValueString(), "") != spaces.ReplaceAllString(s.HistoricalTTLExpression, "") {
+			data.HistoryTTL = types.StringValue(s.HistoricalTTLExpression)
 		}
 	}
 
@@ -290,6 +272,7 @@ func (r *streamResource) Update(ctx context.Context, req resource.UpdateRequest,
 			Name:    data.Columns[i].Name.ValueString(),
 			Type:    data.Columns[i].Type.ValueString(),
 			Default: data.Columns[i].Default.ValueString(),
+			Codec:   data.Columns[i].Codec.ValueString(),
 		})
 	}
 
@@ -297,9 +280,9 @@ func (r *streamResource) Update(ctx context.Context, req resource.UpdateRequest,
 		Name:                    data.Name.ValueString(),
 		Description:             data.Description.ValueString(),
 		Columns:                 columns,
-		RetentionBytes:          int(data.RetentionSize.ValueInt64()),
-		RetentionMS:             int(data.RetentionPeriod.ValueInt64()),
-		HistoricalTTLExpression: data.HistoricalDataTTL.ValueString(),
+		RetentionBytes:          int(data.RetentionBytes.ValueInt64()),
+		RetentionMS:             int(data.RetentionMS.ValueInt64()),
+		HistoricalTTLExpression: data.HistoryTTL.ValueString(),
 	}
 	if err := r.client.UpdateStream(&s); err != nil {
 		resp.Diagnostics.AddError("Error Updating Stream", fmt.Sprintf("Unable to update stream %q, got error: %s", s.Name, err))

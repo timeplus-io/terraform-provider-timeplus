@@ -27,13 +27,13 @@ type materializedViewDataSource struct {
 
 // materializedViewDataSourceModel describes the data source data model.
 type materializedViewDataSourceModel struct {
-	Name              types.String `tfsdk:"name"`
-	Description       types.String `tfsdk:"description"`
-	Query             types.String `tfsdk:"query"`
-	TargetStream      types.String `tfsdk:"target_stream"`
-	RetentionSize     types.Int64  `tfsdk:"retention_size"`
-	RetentionPeriod   types.Int64  `tfsdk:"retention_period"`
-	HistoricalDataTTL types.String `tfsdk:"historical_data_ttl"`
+	Name           types.String `tfsdk:"name"`
+	Description    types.String `tfsdk:"description"`
+	Query          types.String `tfsdk:"query"`
+	TargetStream   types.String `tfsdk:"target_stream"`
+	RetentionBytes types.Int64  `tfsdk:"retention_bytes"`
+	RetentionMS    types.Int64  `tfsdk:"retention_ms"`
+	HistoryTTL     types.String `tfsdk:"history_ttl"`
 }
 
 func (d *materializedViewDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -52,7 +52,6 @@ func (d *materializedViewDataSource) Schema(ctx context.Context, req datasource.
 			},
 			"description": schema.StringAttribute{
 				MarkdownDescription: "A detailed text describes the view",
-				Optional:            true,
 				Computed:            true,
 			},
 			"query": schema.StringAttribute{
@@ -61,22 +60,18 @@ func (d *materializedViewDataSource) Schema(ctx context.Context, req datasource.
 			},
 			"target_stream": schema.StringAttribute{
 				MarkdownDescription: "The optional stream name that the materialized view writes data to",
-				Optional:            true,
 				Computed:            true,
 			},
-			"retention_size": schema.Int64Attribute{
+			"retention_bytes": schema.Int64Attribute{
 				MarkdownDescription: "The retention size threadhold in bytes indicates how many data could be kept in the streaming store",
-				Optional:            true,
 				Computed:            true,
 			},
-			"retention_period": schema.Int64Attribute{
+			"retention_ms": schema.Int64Attribute{
 				MarkdownDescription: "The retention period threadhold in millisecond indicates how long data could be kept in the streaming store",
-				Optional:            true,
 				Computed:            true,
 			},
-			"historical_data_ttl": schema.StringAttribute{
-				MarkdownDescription: "A SQL expression defines the maximum age of data that are persisted in the historical store",
-				Optional:            true,
+			"history_ttl": schema.StringAttribute{
+				MarkdownDescription: "A SQL expression defines the maximum age of historical data",
 				Computed:            true,
 			},
 		},
@@ -123,9 +118,9 @@ func (d *materializedViewDataSource) Read(ctx context.Context, req datasource.Re
 	data.Description = types.StringValue(v.Description)
 	data.Query = types.StringValue(v.Query)
 	data.TargetStream = types.StringValue(v.TargetStream)
-	data.RetentionSize = types.Int64Value(int64(v.RetentionBytes))
-	data.RetentionPeriod = types.Int64Value(int64(v.RetentionMS))
-	data.HistoricalDataTTL = types.StringValue(v.HistoricalTTLExpression)
+	data.RetentionBytes = types.Int64Value(int64(v.RetentionBytes))
+	data.RetentionMS = types.Int64Value(int64(v.RetentionMS))
+	data.HistoryTTL = types.StringValue(v.TTLExpression)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

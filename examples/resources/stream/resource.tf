@@ -1,13 +1,11 @@
-resource "timeplus_stream" "example" {
-  name = "example"
+resource "timeplus_stream" "basic_example" {
+  name = "basic_example"
 
-  description = "a stream managed with Terraform timeplus provider"
+  description = "A simple stream with three columns"
 
   column {
-    name    = "col_1"
-    type    = "string"
-    default = "foo"
-    codec   = "LZ4"
+    name = "col_1"
+    type = "string"
   }
 
   column {
@@ -16,8 +14,57 @@ resource "timeplus_stream" "example" {
   }
 
   column {
-    name = "timestamp"
-    type = "datetime64(3)"
+    name    = "col_3"
+    type    = "datetime64(3)"
+    default = "now()"
   }
-  historical_data_ttl = "to_datetime(_tp_time)     +    INTERVAL 14 DAY"
+}
+
+resource "timeplus_stream" "codec_example" {
+  name = "codec_example"
+
+  description = "An example shows how to use codec on columns"
+
+  column {
+    name  = "col_1"
+    type  = "string"
+    codec = "LZ4"
+  }
+
+  column {
+    name = "col_2"
+    type = "int32"
+  }
+
+  column {
+    name    = "col_3"
+    type    = "datetime64(3)"
+    default = "now()"
+  }
+}
+
+resource "timeplus_stream" "retention_example" {
+  name = "retention_example"
+
+  description = "An example shows how to customize retention plicy on a stream"
+
+  column {
+    name = "col_1"
+    type = "string"
+  }
+
+  column {
+    name = "col_2"
+    type = "int32"
+  }
+
+  column {
+    name    = "col_3"
+    type    = "datetime64(3)"
+    default = "now()"
+  }
+
+  retention_bytes = 10 * 1024 * 1204 * 1024 // 10Gi in bytes
+  retention_ms    = 7 * 24 * 60 * 60 * 1000 // 7 days in ms 
+  history_ttl     = "to_datetime(_tp_time) + INTERVAL 30 DAY"
 }

@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -86,8 +87,9 @@ func (r *sourceResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 			},
 			// since Terraform does not have built-in support for map[string]any with the framework library, we use JSON as a simple solution
 			"properties": schema.StringAttribute{
-				MarkdownDescription: "JSON string of an object defines the configurations for the specific source type",
+				MarkdownDescription: "JSON string of an object defines the configurations for the specific source type. The properites could contain sensitive information like password, secret, etc.",
 				Required:            true,
+				Sensitive:           true,
 				Validators: []validator.String{
 					myvalidator.JsonObject(),
 				},
@@ -180,12 +182,18 @@ func (r *sourceResource) Read(ctx context.Context, req resource.ReadRequest, res
 	data.Stream = types.StringValue(s.Stream)
 	data.Type = types.StringValue(s.Type)
 
+	// We can't compare the JSON directly since order is not guaranteed, need a bit more work to detect if properties are acutally changed
 	props := make(map[string]any)
 	if data.Properties.ValueString() != "" {
 		_ = json.Unmarshal([]byte(data.Properties.ValueString()), &props)
 	}
 
-	if !reflect.DeepEqual(props, s.Properties) {
+	clone := maps.Clone(props)
+
+	// API does not return sensitive fields, thus we can't simply use s.Properties to replace data.Properties
+	maps.Copy(props, s.Properties)
+
+	if !reflect.DeepEqual(clone, props) {
 		propsBytes, err := json.Marshal(s.Properties)
 		if err != nil {
 			resp.Diagnostics.AddError("Bad Source Properties", fmt.Sprintf("Unable to encode source properties into JSON, got error: %s", err))
