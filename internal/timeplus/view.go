@@ -3,9 +3,9 @@
 package timeplus
 
 type View struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Query       string `json:"query"`
+	Name        string
+	Description string
+	Query       string
 }
 
 func (v *View) toAPIModel() viewAPIModel {
@@ -57,10 +57,10 @@ func (c *Client) GetView(name string) (v View, err error) {
 type MaterializedView struct {
 	View
 
-	TargetStream            string `json:"target_stream,omitempty"`
-	RetentionBytes          int    `json:"logstore_retention_bytes,omitempty"`
-	RetentionMS             int    `json:"logstore_retention_ms,omitempty"`
-	HistoricalTTLExpression string `json:"ttl,omitempty"`
+	TargetStream   string
+	RetentionBytes int
+	RetentionMS    int
+	TTLExpression  string
 }
 
 func (v *MaterializedView) toAPIModel() viewAPIModel {
@@ -69,14 +69,14 @@ func (v *MaterializedView) toAPIModel() viewAPIModel {
 	}
 
 	return viewAPIModel{
-		Name:                    v.Name,
-		Description:             v.Description,
-		Query:                   v.Query,
-		Materialized:            true,
-		TargetStream:            v.TargetStream,
-		HistoricalTTLExpression: v.HistoricalTTLExpression,
-		RetentionBytes:          v.RetentionBytes,
-		RetentionMS:             v.RetentionMS,
+		Name:           v.Name,
+		Description:    v.Description,
+		Query:          v.Query,
+		Materialized:   true,
+		TargetStream:   v.TargetStream,
+		TTLExpression:  v.TTLExpression,
+		RetentionBytes: v.RetentionBytes,
+		RetentionMS:    v.RetentionMS,
 	}
 }
 
@@ -88,7 +88,7 @@ func (v *MaterializedView) fromAPIModel(m viewAPIModel) {
 	v.Description = m.Description
 	v.Query = m.Query
 	v.TargetStream = m.TargetStream
-	v.HistoricalTTLExpression = m.TTL
+	v.TTLExpression = m.TTL
 	v.RetentionBytes = m.RetentionBytes
 	v.RetentionMS = m.RetentionMS
 }
@@ -126,15 +126,15 @@ func (c *Client) GetMaterializedView(name string) (v MaterializedView, err error
 }
 
 type viewAPIModel struct {
-	Name                    string `json:"name"`
-	Description             string `json:"description"`
-	Query                   string `json:"query"`
-	Materialized            bool   `json:"materialized"`
-	TargetStream            string `json:"target_stream,omitempty"`
-	RetentionBytes          int    `json:"logstore_retention_bytes,omitempty"`
-	RetentionMS             int    `json:"logstore_retention_ms,omitempty"`
-	HistoricalTTLExpression string `json:"ttl_expression,omitempty"`
-	TTL                     string `json:"ttl,omitempty"` // ttl is the field name from API responses
+	Name           string `json:"name"`
+	Description    string `json:"description"`
+	Query          string `json:"query,omitempty"` // can't set query when updating
+	Materialized   bool   `json:"materialized"`
+	TargetStream   string `json:"target_stream,omitempty"`
+	RetentionBytes int    `json:"logstore_retention_bytes,omitempty"`
+	RetentionMS    int    `json:"logstore_retention_ms,omitempty"`
+	TTLExpression  string `json:"ttl_expression,omitempty"`
+	TTL            string `json:"ttl,omitempty"` // ttl is the field name from API responses
 }
 
 // resourceID implements resource

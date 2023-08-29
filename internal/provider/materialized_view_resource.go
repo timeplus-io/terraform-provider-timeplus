@@ -32,13 +32,13 @@ type materializedViewResource struct {
 
 // materializedViewResourceModel describes the materialized view resource data model.
 type materializedViewResourceModel struct {
-	Name              types.String `tfsdk:"name"`
-	Description       types.String `tfsdk:"description"`
-	Query             types.String `tfsdk:"query"`
-	TargetStream      types.String `tfsdk:"target_stream"`
-	RetentionSize     types.Int64  `tfsdk:"retention_size"`
-	RetentionPeriod   types.Int64  `tfsdk:"retention_period"`
-	HistoricalDataTTL types.String `tfsdk:"historical_data_ttl"`
+	Name           types.String `tfsdk:"name"`
+	Description    types.String `tfsdk:"description"`
+	Query          types.String `tfsdk:"query"`
+	TargetStream   types.String `tfsdk:"target_stream"`
+	RetentionBytes types.Int64  `tfsdk:"retention_bytes"`
+	RetentionMS    types.Int64  `tfsdk:"retention_ms"`
+	HistoryTTL     types.String `tfsdk:"history_ttl"`
 }
 
 func (r *materializedViewResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -63,7 +63,7 @@ func (r *materializedViewResource) Schema(_ context.Context, _ resource.SchemaRe
 				Optional:            true,
 			},
 			"query": schema.StringAttribute{
-				MarkdownDescription: "The query SQL of the view",
+				MarkdownDescription: "The query SQL of the view. Changing the SQL will lead to a recreation.",
 				Required:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -76,18 +76,18 @@ func (r *materializedViewResource) Schema(_ context.Context, _ resource.SchemaRe
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
-			"retention_size": schema.Int64Attribute{
+			"retention_bytes": schema.Int64Attribute{
 				MarkdownDescription: "The retention size threadhold in bytes indicates how many data could be kept in the streaming store",
 				Optional:            true,
 				Computed:            true,
 			},
-			"retention_period": schema.Int64Attribute{
+			"retention_ms": schema.Int64Attribute{
 				MarkdownDescription: "The retention period threadhold in millisecond indicates how long data could be kept in the streaming store",
 				Optional:            true,
 				Computed:            true,
 			},
-			"historical_data_ttl": schema.StringAttribute{
-				MarkdownDescription: "A SQL expression defines the maximum age of data that are persisted in the historical store",
+			"history_ttl": schema.StringAttribute{
+				MarkdownDescription: "A SQL expression defines the maximum age of historical data",
 				Optional:            true,
 			},
 		},
@@ -130,9 +130,9 @@ func (r *materializedViewResource) Create(ctx context.Context, req resource.Crea
 			Description: data.Description.ValueString(),
 			Query:       data.Query.ValueString(),
 		},
-		RetentionBytes:          int(data.RetentionSize.ValueInt64()),
-		RetentionMS:             int(data.RetentionPeriod.ValueInt64()),
-		HistoricalTTLExpression: data.HistoricalDataTTL.ValueString(),
+		RetentionBytes: int(data.RetentionBytes.ValueInt64()),
+		RetentionMS:    int(data.RetentionMS.ValueInt64()),
+		TTLExpression:  data.HistoryTTL.ValueString(),
 	}
 	if err := r.client.CreateMaterializedView(&v); err != nil {
 		resp.Diagnostics.AddError("Error Creating Materialized View", fmt.Sprintf("Unable to create materialized view %q, got error: %s", v.Name, err))
@@ -140,8 +140,8 @@ func (r *materializedViewResource) Create(ctx context.Context, req resource.Crea
 	}
 
 	// Computed fields
-	data.RetentionSize = types.Int64Value(int64(v.RetentionBytes))
-	data.RetentionPeriod = types.Int64Value(int64(v.RetentionMS))
+	data.RetentionBytes = types.Int64Value(int64(v.RetentionBytes))
+	data.RetentionMS = types.Int64Value(int64(v.RetentionMS))
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
@@ -181,17 +181,17 @@ func (r *materializedViewResource) Read(ctx context.Context, req resource.ReadRe
 	}
 
 	// the create view API will set retention_bytes to -1 if it's not provided
-	if !(data.RetentionSize.IsNull() && v.RetentionBytes == -1) {
-		data.RetentionSize = types.Int64Value(int64(v.RetentionBytes))
+	if !(data.RetentionBytes.IsNull() && v.RetentionBytes == -1) {
+		data.RetentionBytes = types.Int64Value(int64(v.RetentionBytes))
 	}
 
 	// the create view API will set retention_ms to -1 if it's not provided
-	if !(data.RetentionPeriod.IsNull() && v.RetentionMS == -1) {
-		data.RetentionPeriod = types.Int64Value(int64(v.RetentionMS))
+	if !(data.RetentionMS.IsNull() && v.RetentionMS == -1) {
+		data.RetentionMS = types.Int64Value(int64(v.RetentionMS))
 	}
 
-	if !(data.HistoricalDataTTL.IsNull() && v.HistoricalTTLExpression == "") {
-		data.HistoricalDataTTL = types.StringValue(v.HistoricalTTLExpression)
+	if !(data.HistoryTTL.IsNull() && v.TTLExpression == "") {
+		data.HistoryTTL = types.StringValue(v.TTLExpression)
 	}
 
 	// Save updated data into Terraform state
@@ -212,11 +212,11 @@ func (r *materializedViewResource) Update(ctx context.Context, req resource.Upda
 		View: timeplus.View{
 			Name:        data.Name.ValueString(),
 			Description: data.Description.ValueString(),
-			Query:       data.Query.ValueString(),
+			// do not set `Query` as it's immutable
 		},
-		RetentionBytes:          int(data.RetentionSize.ValueInt64()),
-		RetentionMS:             int(data.RetentionPeriod.ValueInt64()),
-		HistoricalTTLExpression: data.HistoricalDataTTL.ValueString(),
+		RetentionBytes: int(data.RetentionBytes.ValueInt64()),
+		RetentionMS:    int(data.RetentionMS.ValueInt64()),
+		TTLExpression:  data.HistoryTTL.ValueString(),
 	}
 	if err := r.client.UpdateMaterializedView(&v); err != nil {
 		resp.Diagnostics.AddError("Error Updating Materialized View", fmt.Sprintf("Unable to update materialized view %q, got error: %s", v.Name, err))
