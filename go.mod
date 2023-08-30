@@ -1,6 +1,6 @@
 module github.com/timeplus-io/terraform-provider-timeplus
 
-go 1.19
+go 1.21
 
 require (
 	github.com/hashicorp/terraform-plugin-docs v0.16.0
