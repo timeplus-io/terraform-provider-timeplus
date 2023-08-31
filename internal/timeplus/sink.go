@@ -6,8 +6,7 @@ type Sink struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description,omitempty"`
-	SQL         string `json:"sql"`   // request
-	Query       string `json:"query"` // response
+	Query       string `json:"query"`
 
 	// Additional configurations such as broker url and etc. should be passed through `properties`
 	Type string `json:"type"`
@@ -41,6 +40,5 @@ func (c *Client) UpdateSink(s *Sink) error {
 func (c *Client) GetSink(id string) (Sink, error) {
 	s := Sink{ID: id}
 	err := c.get(&s)
-	s.SQL = s.Query // caused by inconsistent API design
 	return s, err
 }

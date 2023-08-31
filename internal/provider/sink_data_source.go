@@ -111,7 +111,7 @@ func (d *sinkDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	// required fields
 	data.Name = types.StringValue(s.Name)
 	data.Description = types.StringValue(s.Description)
-	data.Query = types.StringValue(s.SQL)
+	data.Query = types.StringValue(s.Query)
 	data.Type = types.StringValue(s.Type)
 
 	propsBytes, err := json.Marshal(s.Properties)

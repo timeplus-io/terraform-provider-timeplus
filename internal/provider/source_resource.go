@@ -191,7 +191,7 @@ func (r *sourceResource) Read(ctx context.Context, req resource.ReadRequest, res
 	clone := maps.Clone(props)
 
 	// API does not return sensitive fields, thus we can't simply use s.Properties to replace data.Properties
-	maps.Copy(props, s.Properties)
+	deepCopyMap(ctx, props, s.Properties)
 
 	if !reflect.DeepEqual(clone, props) {
 		propsBytes, err := json.Marshal(s.Properties)

@@ -89,7 +89,6 @@ func (r *sinkResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 			"properties": schema.StringAttribute{
 				MarkdownDescription: "A JSON object defines the configurations for the specific sink type. The properites could contain sensitive information like password, secret, etc.",
 				Required:            true,
-				Sensitive:           true,
 				Validators: []validator.String{
 					myvalidator.JsonObject(),
 				},
@@ -137,7 +136,7 @@ func (r *sinkResource) Create(ctx context.Context, req resource.CreateRequest, r
 	s := timeplus.Sink{
 		Name:        data.Name.ValueString(),
 		Description: data.Description.ValueString(),
-		SQL:         data.Query.ValueString(),
+		Query:       data.Query.ValueString(),
 		Type:        data.Type.ValueString(),
 		Properties:  props,
 	}
@@ -156,6 +155,30 @@ func (r *sinkResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func deepCopyMap(ctx context.Context, dst, src map[string]any) {
+	for k, v := range src {
+		dv, ok := dst[k]
+		if !ok || dv == nil {
+			dst[k] = v
+			return
+		}
+
+		dm, ok := dv.(map[string]any)
+		if !ok {
+			dst[k] = v
+			return
+		}
+
+		sm, ok := v.(map[string]any)
+		if !ok {
+			dst[k] = v
+			return
+		}
+
+		deepCopyMap(ctx, dm, sm)
+	}
 }
 
 func (r *sinkResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -179,7 +202,7 @@ func (r *sinkResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 
 	// required fields
 	data.Name = types.StringValue(s.Name)
-	data.Query = types.StringValue(s.SQL)
+	data.Query = types.StringValue(s.Query)
 	data.Type = types.StringValue(s.Type)
 
 	// We can't compare the JSON directly since order is not guaranteed, need a bit more work to detect if properties are acutally changed
@@ -191,7 +214,7 @@ func (r *sinkResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	clone := maps.Clone(props)
 
 	// API does not return sensitive fields, thus we can't simply use s.Properties to replace data.Properties
-	maps.Copy(props, s.Properties)
+	deepCopyMap(ctx, props, s.Properties)
 
 	if !reflect.DeepEqual(clone, props) {
 		propsBytes, err := json.Marshal(s.Properties)
@@ -231,7 +254,7 @@ func (r *sinkResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		ID:          data.ID.ValueString(),
 		Name:        data.Name.ValueString(),
 		Description: data.Description.ValueString(),
-		SQL:         data.Query.ValueString(),
+		Query:       data.Query.ValueString(),
 		Type:        data.Type.ValueString(),
 		Properties:  props,
 	}
