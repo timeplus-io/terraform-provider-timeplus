@@ -19,7 +19,8 @@ Use the navigation to the left to read about the available resources.
 terraform {
   required_providers {
     timeplus = {
-      source = "timeplus-io/timeplus"
+      source  = "timeplus-io/timeplus"
+      version = ">= 0.1.2"
     }
   }
 }

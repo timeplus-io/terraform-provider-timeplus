@@ -44,7 +44,7 @@ terraform {
   required_providers {
     timeplus = {
       source  = "timeplus-io/timeplus"
-      version = ">= 0.1.0"
+      version = ">= 0.1.2"
     }
   }
 }

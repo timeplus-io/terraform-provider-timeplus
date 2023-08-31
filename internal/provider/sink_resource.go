@@ -88,6 +88,7 @@ func (r *sinkResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 			// since Terraform does not have built-in support for map[string]any with the framework library, we use JSON as a simple solution
 			"properties": schema.StringAttribute{
 				MarkdownDescription: "A JSON object defines the configurations for the specific sink type. The properites could contain sensitive information like password, secret, etc.",
+				Sensitive:           true,
 				Required:            true,
 				Validators: []validator.String{
 					myvalidator.JsonObject(),
