@@ -3,15 +3,15 @@
 page_title: "timeplus_alert Resource - terraform-provider-timeplus"
 subcategory: ""
 description: |-
-  Alerts are like sinks, they are used to send data to external systems. How alerts are different is that alerts have two statuses: 'triggerred' and 'resolved'.
-  An alert runs two queries in background to detect if the status should be triggerred or resolved. Once an alert is in one status, it won't send the same kind of events to the target until it gets a different kind of event.
+  Alerts are like sinks, they are used to send data to external systems. How alerts are different is that alerts have two statuses: 'triggered' and 'resolved'.
+  An alert runs two queries in background to detect if the status should be triggered or resolved. Once an alert is in one status, it won't send the same kind of events to the target until it gets a different kind of event.
 ---
 
 # timeplus_alert (Resource)
 
-Alerts are like sinks, they are used to send data to external systems. How alerts are different is that alerts have two statuses: 'triggerred' and 'resolved'.
+Alerts are like sinks, they are used to send data to external systems. How alerts are different is that alerts have two statuses: 'triggered' and 'resolved'.
 
-An alert runs two queries in background to detect if the status should be triggerred or resolved. Once an alert is in one status, it won't send the same kind of events to the target until it gets a different kind of event.
+An alert runs two queries in background to detect if the status should be triggered or resolved. Once an alert is in one status, it won't send the same kind of events to the target until it gets a different kind of event.
 
 ## Example Usage
 
