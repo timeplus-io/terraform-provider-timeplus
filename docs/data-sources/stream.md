@@ -39,6 +39,7 @@ output "example_stream" {
 
 - `columns` (Attributes List) The columns of the stream (see [below for nested schema](#nestedatt--columns))
 - `description` (String) A detailed text describes the stream
+- `mode` (String) The stream mode. Options: append, changelog, changelog_kv, versioned_kv. Default: "append"
 
 <a id="nestedatt--columns"></a>
 ### Nested Schema for `columns`
@@ -48,4 +49,6 @@ Read-Only:
 - `codec` (String) The codec for value encoding
 - `default` (String) The default value for the column
 - `name` (String) The column name
+- `primary_key` (Boolean) If set to `true`, this column will be used as the primary key, or part of the combined primary key if multiple columns are marked as primary keys.
 - `type` (String) The type name of the column
+- `use_as_event_time` (Boolean) If set to `true`, this column will be used as the event time column (by default ingest time will be used as event time). Only one column can be marked as the event time column in a stream.
