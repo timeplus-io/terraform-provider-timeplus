@@ -329,6 +329,10 @@ func (r *streamResource) Read(ctx context.Context, req resource.ReadRequest, res
 		}
 	}
 
+	if !(data.Mode.IsNull() && (s.Mode == "" || s.Mode == string(timeplus.StreamModeAppend))) {
+		data.Mode = types.StringValue(s.Mode)
+	}
+
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
