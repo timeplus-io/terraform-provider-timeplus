@@ -2,6 +2,11 @@
 
 package timeplus
 
+import (
+	"errors"
+	"slices"
+)
+
 type Column struct {
 	Name                    string `json:"name" binding:"required" example:"name"`
 	Type                    string `json:"type" binding:"required" example:"string"`
@@ -19,6 +24,24 @@ const (
 	StreamModeChangeLogKV StreamMode = "changelog_kv"
 	StreamModeVersionedKV StreamMode = "versioned_kv"
 )
+
+func StreamModeFrom(s string) (StreamMode, error) {
+	m := StreamMode(s)
+	if m == "" {
+		m = StreamModeAppend
+	}
+
+	if slices.Contains([]StreamMode{
+		StreamModeAppend,
+		StreamModeChangeLog,
+		StreamModeChangeLogKV,
+		StreamModeVersionedKV,
+	}, m) {
+		return m, nil
+	}
+
+	return "", errors.New("unknown stream mode")
+}
 
 type Stream struct {
 	// Stream name should only contain a maximum of 64 letters, numbers, or _, and start with a letter
