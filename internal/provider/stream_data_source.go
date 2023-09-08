@@ -34,6 +34,7 @@ type streamDataSourceModel struct {
 	RetentionBytes types.Int64   `tfsdk:"retention_bytes"`
 	RetentionMS    types.Int64   `tfsdk:"retention_ms"`
 	HistoryTTL     types.String  `tfsdk:"history_ttl"`
+	Mode           types.String  `tfsdk:"mode"`
 }
 
 func (d *streamDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -52,6 +53,10 @@ func (d *streamDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 			},
 			"description": schema.StringAttribute{
 				MarkdownDescription: "A detailed text describes the stream",
+				Computed:            true,
+			},
+			"mode": schema.StringAttribute{
+				MarkdownDescription: "The stream mode. Options: append, changelog, changelog_kv, versioned_kv. Default: \"append\"",
 				Computed:            true,
 			},
 			"columns": schema.ListNestedAttribute{
@@ -73,6 +78,14 @@ func (d *streamDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 						},
 						"codec": schema.StringAttribute{
 							MarkdownDescription: "The codec for value encoding",
+							Computed:            true,
+						},
+						"use_as_event_time": schema.BoolAttribute{
+							MarkdownDescription: "If set to `true`, this column will be used as the event time column (by default ingest time will be used as event time). Only one column can be marked as the event time column in a stream.",
+							Computed:            true,
+						},
+						"primary_key": schema.BoolAttribute{
+							MarkdownDescription: "If set to `true`, this column will be used as the primary key, or part of the combined primary key if multiple columns are marked as primary keys.",
 							Computed:            true,
 						},
 					},
@@ -138,16 +151,41 @@ func (d *streamDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	data.RetentionBytes = types.Int64Value(int64(s.RetentionBytes))
 	data.RetentionMS = types.Int64Value(int64(s.RetentionMS))
 	data.HistoryTTL = types.StringValue(s.HistoricalTTLExpression)
+	data.Mode = types.StringValue(s.Mode)
+
+	pKeys := map[string]struct{}{}
+	for _, k := range strings.Split(s.PrimaryKey, ",") {
+		// remove the the quotes "`" if they exists
+		k = strings.TrimSuffix(
+			strings.TrimPrefix(
+				strings.TrimSpace(k), "`"), "`")
+		pKeys[k] = struct{}{}
+	}
 
 	data.Columns = make([]columnModel, 0, len(s.Columns))
 	for i := range s.Columns {
+		name := s.Columns[i].Name
+
+		if name == "_tp_time" {
+			continue
+		}
+
+		// `codec` returned by the API contains the `CODEC()` function call, like `CODEC(LZ4)`.
+		// Removing the surrounding `CODEC()` to match the input.
 		codec := types.StringValue(strings.TrimSuffix(strings.TrimPrefix(s.Columns[i].Codec, "CODEC("), ")"))
-		data.Columns = append(data.Columns, columnModel{
-			Name:    types.StringValue(s.Columns[i].Name),
+
+		col := columnModel{
+			Name:    types.StringValue(name),
 			Type:    types.StringValue(s.Columns[i].Type),
 			Default: types.StringValue(s.Columns[i].Default),
 			Codec:   codec,
-		})
+		}
+
+		if _, ok := pKeys[name]; ok {
+			col.PrimaryKey = types.BoolValue(true)
+		}
+
+		data.Columns = append(data.Columns, col)
 	}
 
 	// Save updated data into Terraform state

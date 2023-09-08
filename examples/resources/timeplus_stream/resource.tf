@@ -68,3 +68,22 @@ resource "timeplus_stream" "retention_example" {
   retention_ms    = 7 * 24 * 60 * 60 * 1000 // 7 days in ms 
   history_ttl     = "to_datetime(_tp_time) + INTERVAL 30 DAY"
 }
+
+resource "timeplus_stream" "mode_example" {
+  name = "mode_example"
+
+  description = "An example shows how to use different mode to create stream"
+
+  mode = "versioned_kv"
+
+  column {
+    name        = "id"
+    type        = "string"
+    primary_key = true
+  }
+
+  column {
+    name = "value"
+    type = "int32"
+  }
+}
