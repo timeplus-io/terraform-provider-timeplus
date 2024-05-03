@@ -19,8 +19,9 @@ type resource interface {
 type Client struct {
 	*http.Client
 
-	baseURL *url.URL
-	apiKey  string
+	baseURL  *url.URL
+	apiKey   string
+	replicas *int
 }
 
 // optional configurations for the client
@@ -40,7 +41,7 @@ func DefaultOptions() ClientOptions {
 	}
 }
 
-func NewClient(workspaceID string, apiKey string, opts ClientOptions) (*Client, error) {
+func NewClient(workspaceID string, apiKey string, replicas *int, opts ClientOptions) (*Client, error) {
 	ops := DefaultOptions()
 	ops.merge(opts)
 
@@ -51,9 +52,10 @@ func NewClient(workspaceID string, apiKey string, opts ClientOptions) (*Client, 
 	baseURL = baseURL.JoinPath(workspaceID, "api", "v1beta2")
 
 	return &Client{
-		Client:  http.DefaultClient,
-		baseURL: baseURL,
-		apiKey:  apiKey,
+		Client:   http.DefaultClient,
+		baseURL:  baseURL,
+		apiKey:   apiKey,
+		replicas: replicas,
 	}, nil
 }
 

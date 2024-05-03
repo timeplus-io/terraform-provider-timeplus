@@ -32,6 +32,12 @@ type TimeplusProviderModel struct {
 	Endpoint  types.String `tfsdk:"endpoint"`
 	Workspace types.String `tfsdk:"workspace"`
 	ApiKey    types.String `tfsdk:"api_key"`
+
+	// Ideally we should read this from stream definitions. However, there are 2 limitations
+	//   1. Proton cluster (e.g. replica = 3) doesn't allow stream with relicatoin_refactor equals other number (e.g. 2)
+	//   2. Proton get/list stream endpoint doesn't return relicatoin_refactor of the stream
+	// Thus, we currently define this `replicas` as a provider setting
+	Replicas types.Int64 `tfsdk:"replicas"`
 }
 
 func (p *TimeplusProvider) Metadata(ctx context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -59,6 +65,11 @@ Use the navigation to the left to read about the available resources.`,
 				Required:            true,
 				Sensitive:           true,
 			},
+			"replicas": schema.Int64Attribute{
+				MarkdownDescription: "Number of Proton replicas",
+				Required:            false,
+				Optional:            true,
+			},
 		},
 	}
 }
@@ -72,8 +83,14 @@ func (p *TimeplusProvider) Configure(ctx context.Context, req provider.Configure
 		return
 	}
 
+	var replicas *int
+	if !(data.Replicas.IsNull() || data.Replicas.IsUnknown()) {
+		valInt := int(*data.Replicas.ValueInt64Pointer())
+		replicas = &valInt
+	}
+
 	// Configuration values are now available.
-	client, err := timeplus.NewClient(data.Workspace.ValueString(), data.ApiKey.ValueString(), timeplus.ClientOptions{
+	client, err := timeplus.NewClient(data.Workspace.ValueString(), data.ApiKey.ValueString(), replicas, timeplus.ClientOptions{
 		BaseURL: data.Endpoint.ValueString(),
 	})
 	if err != nil {
