@@ -84,10 +84,6 @@ func (Stream) resourcePath() string {
 }
 
 func (c *Client) CreateStream(s *Stream) error {
-	if c.replicas != nil {
-		s.ReplicationFactor = *c.replicas
-	}
-
 	if err := c.post(s); err != nil {
 		return err
 	}
