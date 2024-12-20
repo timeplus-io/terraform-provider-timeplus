@@ -16,7 +16,7 @@ func newClient(t *testing.T) *timeplus.Client {
 	} else {
 		t.Logf("found API key: %s[=== scrubbed ===]", apiKey[:8])
 	}
-	c, err := timeplus.NewClient("latest", apiKey, timeplus.ClientOptions{
+	c, err := timeplus.NewClient("latest", apiKey, "", "", timeplus.ClientOptions{
 		BaseURL: "https://dev.timeplus.cloud",
 	})
 	if err != nil {

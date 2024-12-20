@@ -20,7 +20,7 @@ type Client struct {
 	*http.Client
 
 	baseURL *url.URL
-	apiKey  string
+	header  http.Header
 }
 
 // optional configurations for the client
@@ -40,7 +40,7 @@ func DefaultOptions() ClientOptions {
 	}
 }
 
-func NewClient(workspaceID string, apiKey string, opts ClientOptions) (*Client, error) {
+func NewClient(workspaceID string, apiKey, username, password string, opts ClientOptions) (*Client, error) {
 	ops := DefaultOptions()
 	ops.merge(opts)
 
@@ -53,7 +53,7 @@ func NewClient(workspaceID string, apiKey string, opts ClientOptions) (*Client, 
 	return &Client{
 		Client:  http.DefaultClient,
 		baseURL: baseURL,
-		apiKey:  apiKey,
+		header:  NewHeader(apiKey, username, password),
 	}, nil
 }
 
@@ -117,7 +117,7 @@ func (c *Client) newRequest(method, url string, body io.Reader) (*http.Request, 
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Authorization", "ApiKey "+c.apiKey)
+	req.Header = c.header
 	return req, nil
 }
 

@@ -32,6 +32,8 @@ type TimeplusProviderModel struct {
 	Endpoint  types.String `tfsdk:"endpoint"`
 	Workspace types.String `tfsdk:"workspace"`
 	ApiKey    types.String `tfsdk:"api_key"`
+	Username  types.String `tfsdk:"username"`
+	Password  types.String `tfsdk:"password"`
 }
 
 func (p *TimeplusProvider) Metadata(ctx context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -55,8 +57,18 @@ Use the navigation to the left to read about the available resources.`,
 				Required:            true,
 			},
 			"api_key": schema.StringAttribute{
-				MarkdownDescription: "The API key to be used to call Timeplus API.",
-				Required:            true,
+				MarkdownDescription: "[Cloud] The API key to be used to call Timeplus Enterprise Cloud.",
+				Optional:            true,
+				Sensitive:           true,
+			},
+			"username": schema.StringAttribute{
+				MarkdownDescription: "[Onprem] The username.",
+				Optional:            true,
+				Sensitive:           false,
+			},
+			"password": schema.StringAttribute{
+				MarkdownDescription: "[Onprem] The password.",
+				Optional:            true,
 				Sensitive:           true,
 			},
 		},
@@ -73,7 +85,7 @@ func (p *TimeplusProvider) Configure(ctx context.Context, req provider.Configure
 	}
 
 	// Configuration values are now available.
-	client, err := timeplus.NewClient(data.Workspace.ValueString(), data.ApiKey.ValueString(), timeplus.ClientOptions{
+	client, err := timeplus.NewClient(data.Workspace.ValueString(), data.ApiKey.ValueString(), data.Username.ValueString(), data.Password.ValueString(), timeplus.ClientOptions{
 		BaseURL: data.Endpoint.ValueString(),
 	})
 	if err != nil {

@@ -21,20 +21,6 @@ The Timeplus provider for Terraform is a plugin that enables full lifecycle mana
 go install
 ```
 
-## Adding Dependencies
-
-This provider uses [Go modules](https://github.com/golang/go/wiki/Modules).
-Please see the Go documentation for the most up to date information about using Go modules.
-
-To add a new dependency `github.com/author/dependency` to your Terraform provider:
-
-```shell
-go get github.com/author/dependency
-go mod tidy
-```
-
-Then commit the changes to `go.mod` and `go.sum`.
-
 ## Using the provider
 
 To use the provider, simply add it to your terraform file, for example:
@@ -50,10 +36,10 @@ terraform {
 }
 
 provider "timeplus" {
-  # the workspace ID can be found in the URL https://us.timeplus.cloud/<my-workspace-id>
-  workspace = "my-workspace-id"
-  # API key is required to use the provider
-  api_key   = "my-api-key"
+  endpoint = "http://localhost:8000"
+  workspace = "default"
+  username  = "proton"
+  password  = "proton@t+"
 }
 ```
 
@@ -84,5 +70,5 @@ To generate or update documentation, run `go generate`.
 
 ## Useful documentations for provider development
 
-* Timeplus document web site: https://docs.timeplus.com/
-* Terraform plugin framework doc: https://developer.hashicorp.com/terraform/plugin/framework
+- Timeplus document web site: https://docs.timeplus.com/
+- Terraform plugin framework doc: https://developer.hashicorp.com/terraform/plugin/framework
