@@ -36,7 +36,7 @@ func (o *ClientOptions) merge(other ClientOptions) {
 
 func DefaultOptions() ClientOptions {
 	return ClientOptions{
-		BaseURL: "https://us.timeplus.cloud",
+		BaseURL: "https://us-west-2.timeplus.cloud",
 	}
 }
 

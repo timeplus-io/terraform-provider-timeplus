@@ -48,7 +48,7 @@ func (p *TimeplusProvider) Schema(ctx context.Context, req provider.SchemaReques
 Use the navigation to the left to read about the available resources.`,
 		Attributes: map[string]schema.Attribute{
 			"endpoint": schema.StringAttribute{
-				MarkdownDescription: "The base URL endpoint for connecting to the Timeplus workspace. When it's not set, `https://us.timeplus.cloud` will be used.",
+				MarkdownDescription: "The base URL endpoint for connecting to the Timeplus workspace. When it's not set, `https://us-west-2.timeplus.cloud` will be used.",
 				Optional:            true,
 				Validators:          []validator.String{myValidator.URL()},
 			},
