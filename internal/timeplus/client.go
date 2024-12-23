@@ -19,9 +19,8 @@ type resource interface {
 type Client struct {
 	*http.Client
 
-	baseURL  *url.URL
-	apiKey   string
-	replicas *int
+	baseURL *url.URL
+	header  http.Header
 }
 
 // optional configurations for the client
@@ -37,11 +36,11 @@ func (o *ClientOptions) merge(other ClientOptions) {
 
 func DefaultOptions() ClientOptions {
 	return ClientOptions{
-		BaseURL: "https://us.timeplus.cloud",
+		BaseURL: "https://us-west-2.timeplus.cloud",
 	}
 }
 
-func NewClient(workspaceID string, apiKey string, replicas *int, opts ClientOptions) (*Client, error) {
+func NewClient(workspaceID string, apiKey, username, password string, opts ClientOptions) (*Client, error) {
 	ops := DefaultOptions()
 	ops.merge(opts)
 
@@ -52,10 +51,9 @@ func NewClient(workspaceID string, apiKey string, replicas *int, opts ClientOpti
 	baseURL = baseURL.JoinPath(workspaceID, "api", "v1beta2")
 
 	return &Client{
-		Client:   http.DefaultClient,
-		baseURL:  baseURL,
-		apiKey:   apiKey,
-		replicas: replicas,
+		Client:  http.DefaultClient,
+		baseURL: baseURL,
+		header:  NewHeader(apiKey, username, password),
 	}, nil
 }
 
@@ -119,7 +117,7 @@ func (c *Client) newRequest(method, url string, body io.Reader) (*http.Request, 
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Authorization", "ApiKey "+c.apiKey)
+	req.Header = c.header
 	return req, nil
 }
 

@@ -32,12 +32,8 @@ type TimeplusProviderModel struct {
 	Endpoint  types.String `tfsdk:"endpoint"`
 	Workspace types.String `tfsdk:"workspace"`
 	ApiKey    types.String `tfsdk:"api_key"`
-
-	// Ideally we should read this from stream definitions. However, there are 2 limitations
-	//   1. Proton cluster (e.g. replica = 3) doesn't allow stream with relicatoin_refactor equals other number (e.g. 2)
-	//   2. Proton get/list stream endpoint doesn't return relicatoin_refactor of the stream
-	// Thus, we currently define this `replicas` as a provider setting
-	Replicas types.Int64 `tfsdk:"replicas"`
+	Username  types.String `tfsdk:"username"`
+	Password  types.String `tfsdk:"password"`
 }
 
 func (p *TimeplusProvider) Metadata(ctx context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -52,7 +48,7 @@ func (p *TimeplusProvider) Schema(ctx context.Context, req provider.SchemaReques
 Use the navigation to the left to read about the available resources.`,
 		Attributes: map[string]schema.Attribute{
 			"endpoint": schema.StringAttribute{
-				MarkdownDescription: "The base URL endpoint for connecting to the Timeplus workspace. When it's not set, `https://us.timeplus.cloud` will be used.",
+				MarkdownDescription: "The base URL endpoint for connecting to the Timeplus workspace. When it's not set, `https://us-west-2.timeplus.cloud` will be used.",
 				Optional:            true,
 				Validators:          []validator.String{myValidator.URL()},
 			},
@@ -61,14 +57,19 @@ Use the navigation to the left to read about the available resources.`,
 				Required:            true,
 			},
 			"api_key": schema.StringAttribute{
-				MarkdownDescription: "The API key to be used to call Timeplus API.",
-				Required:            true,
+				MarkdownDescription: "[Cloud] The API key to be used to call Timeplus Enterprise Cloud.",
+				Optional:            true,
 				Sensitive:           true,
 			},
-			"replicas": schema.Int64Attribute{
-				MarkdownDescription: "Number of Proton replicas",
-				Required:            false,
+			"username": schema.StringAttribute{
+				MarkdownDescription: "[Onprem] The username.",
 				Optional:            true,
+				Sensitive:           false,
+			},
+			"password": schema.StringAttribute{
+				MarkdownDescription: "[Onprem] The password.",
+				Optional:            true,
+				Sensitive:           true,
 			},
 		},
 	}
@@ -83,14 +84,8 @@ func (p *TimeplusProvider) Configure(ctx context.Context, req provider.Configure
 		return
 	}
 
-	var replicas *int
-	if !(data.Replicas.IsNull() || data.Replicas.IsUnknown()) {
-		valInt := int(*data.Replicas.ValueInt64Pointer())
-		replicas = &valInt
-	}
-
 	// Configuration values are now available.
-	client, err := timeplus.NewClient(data.Workspace.ValueString(), data.ApiKey.ValueString(), replicas, timeplus.ClientOptions{
+	client, err := timeplus.NewClient(data.Workspace.ValueString(), data.ApiKey.ValueString(), data.Username.ValueString(), data.Password.ValueString(), timeplus.ClientOptions{
 		BaseURL: data.Endpoint.ValueString(),
 	})
 	if err != nil {

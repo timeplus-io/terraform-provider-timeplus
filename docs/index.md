@@ -36,9 +36,11 @@ provider "timeplus" {
 
 ### Required
 
-- `api_key` (String, Sensitive) The API key to be used to call Timeplus API.
 - `workspace` (String) The ID of the workspace in which the provider manages resources.
 
 ### Optional
 
-- `endpoint` (String) The base URL endpoint for connecting to the Timeplus workspace. When it's not set, `https://us.timeplus.cloud` will be used.
+- `api_key` (String, Sensitive) [Cloud] The API key to be used to call Timeplus Enterprise Cloud.
+- `endpoint` (String) The base URL endpoint for connecting to the Timeplus workspace. When it's not set, `https://us-west-2.timeplus.cloud` will be used.
+- `password` (String, Sensitive) [Onprem] The password.
+- `username` (String) [Onprem] The username.
