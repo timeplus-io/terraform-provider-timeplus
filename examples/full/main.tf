@@ -6,16 +6,9 @@ terraform {
   }
 }
 
-variable "apikey" {
-  type        = string
-  sensitive   = true
-  description = "API key to be used to connect to Timeplus."
-  default     = ""
-}
-
 provider "timeplus" {
-  workspace = "default"
-  api_key   = var.apikey
+  username = "proton"
+  password = "proton@t+"
 }
 
 data "timeplus_stream" "bar" {

@@ -8,6 +8,6 @@ terraform {
 }
 
 provider "timeplus" {
-  workspace = "my-workspace-id"
-  api_key   = "my-api-key"
+  username = "my-username"
+  password = "my-password"
 }
