@@ -36,11 +36,11 @@ func (o *ClientOptions) merge(other ClientOptions) {
 
 func DefaultOptions() ClientOptions {
 	return ClientOptions{
-		BaseURL: "https://us-west-2.timeplus.cloud",
+		BaseURL: "http://localhost:8000",
 	}
 }
 
-func NewClient(workspaceID string, apiKey, username, password string, opts ClientOptions) (*Client, error) {
+func NewClient(username, password string, opts ClientOptions) (*Client, error) {
 	ops := DefaultOptions()
 	ops.merge(opts)
 
@@ -48,12 +48,12 @@ func NewClient(workspaceID string, apiKey, username, password string, opts Clien
 	if err != nil {
 		return nil, fmt.Errorf("invalid BaseURL `%s`: %w", ops.BaseURL, err)
 	}
-	baseURL = baseURL.JoinPath(workspaceID, "api", "v1beta2")
+	baseURL = baseURL.JoinPath("default", "api", "v1beta2")
 
 	return &Client{
 		Client:  http.DefaultClient,
 		baseURL: baseURL,
-		header:  NewHeader(apiKey, username, password),
+		header:  NewHeader(username, password),
 	}, nil
 }
 
