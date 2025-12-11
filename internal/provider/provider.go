@@ -30,8 +30,6 @@ type TimeplusProvider struct {
 // TimeplusProviderModel describes the provider data model.
 type TimeplusProviderModel struct {
 	Endpoint  types.String `tfsdk:"endpoint"`
-	Workspace types.String `tfsdk:"workspace"`
-	ApiKey    types.String `tfsdk:"api_key"`
 	Username  types.String `tfsdk:"username"`
 	Password  types.String `tfsdk:"password"`
 }
@@ -43,31 +41,22 @@ func (p *TimeplusProvider) Metadata(ctx context.Context, _ provider.MetadataRequ
 
 func (p *TimeplusProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: `The Timeplus provider is used to interact with the resources supported by [Timeplus](https://www.timeplus.com/) in a workspace. The provider needs to be configured with an API key before it can be used.
+		MarkdownDescription: `The Timeplus provider is used to interact with the resources supported by [Timeplus Enterprise](https://www.timeplus.com/). The provider needs to be configured with an username and password before it can be used.
 
 Use the navigation to the left to read about the available resources.`,
 		Attributes: map[string]schema.Attribute{
 			"endpoint": schema.StringAttribute{
-				MarkdownDescription: "The base URL endpoint for connecting to the Timeplus workspace. When it's not set, `https://us-west-2.timeplus.cloud` will be used.",
+				MarkdownDescription: "The base URL endpoint for connecting to the Timeplus Enterprise. When it's not set, `http://localhost:8000` will be used.",
 				Optional:            true,
 				Validators:          []validator.String{myValidator.URL()},
 			},
-			"workspace": schema.StringAttribute{
-				MarkdownDescription: "The ID of the workspace in which the provider manages resources.",
-				Required:            true,
-			},
-			"api_key": schema.StringAttribute{
-				MarkdownDescription: "[Cloud] The API key to be used to call Timeplus Enterprise Cloud.",
-				Optional:            true,
-				Sensitive:           true,
-			},
 			"username": schema.StringAttribute{
-				MarkdownDescription: "[Onprem] The username.",
+				MarkdownDescription: "The username.",
 				Optional:            true,
 				Sensitive:           false,
 			},
 			"password": schema.StringAttribute{
-				MarkdownDescription: "[Onprem] The password.",
+				MarkdownDescription: "The password.",
 				Optional:            true,
 				Sensitive:           true,
 			},
@@ -85,7 +74,7 @@ func (p *TimeplusProvider) Configure(ctx context.Context, req provider.Configure
 	}
 
 	// Configuration values are now available.
-	client, err := timeplus.NewClient(data.Workspace.ValueString(), data.ApiKey.ValueString(), data.Username.ValueString(), data.Password.ValueString(), timeplus.ClientOptions{
+	client, err := timeplus.NewClient(data.Username.ValueString(), data.Password.ValueString(), timeplus.ClientOptions{
 		BaseURL: data.Endpoint.ValueString(),
 	})
 	if err != nil {

@@ -9,7 +9,7 @@ The Timeplus provider for Terraform is a plugin that enables full lifecycle mana
 ## Requirements
 
 - [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.0
-- [Go](https://golang.org/doc/install) >= 1.20.0
+- [Go](https://golang.org/doc/install) >= 1.23.0
 
 ## Building The Provider
 
@@ -37,7 +37,6 @@ terraform {
 
 provider "timeplus" {
   endpoint = "http://localhost:8000"
-  workspace = "default"
   username  = "proton"
   password  = "proton@t+"
 }
